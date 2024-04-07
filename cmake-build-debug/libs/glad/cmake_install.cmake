@@ -1,4 +1,4 @@
-# Install script for directory: /home/ivana/Desktop/grafika/libs/glad
+# Install script for directory: /home/ivana/Desktop/grafika1/grafika/libs/glad
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

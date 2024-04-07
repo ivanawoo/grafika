@@ -105,6 +105,14 @@ void DrawImGui(ProgramState *programState);
 
 unsigned int loadCubemap(vector<std::string> faces);
 
+void setOurLights(Shader shader);
+
+bool spotlightOn = false;
+bool blinn = false;
+bool blinnPressed = false;
+
+glm::vec3 lightPosition(-4.2f, 4.0f, 2.3f);
+
 int main() {
     // glfw: initialize and configure
     // ------------------------------
@@ -166,7 +174,7 @@ int main() {
 
     // build and compile shaders
     // -------------------------
-    Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
+    Shader ourShader("resources/shaders/advancedLighting.vs", "resources/shaders/advancedLighting.fs");
 
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
 
@@ -287,22 +295,14 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
+        setOurLights(ourShader);
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
+        ourShader.setInt("blinn", blinn);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
@@ -360,6 +360,16 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    if(glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnPressed)
+    {
+        blinn = !blinn;
+        blinnPressed = true;
+    }
+    if(glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
+    {
+        blinnPressed = false;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -472,3 +482,41 @@ unsigned int loadCubemap(vector<std::string> faces)
     return textureID;
 }
 
+void setOurLights(Shader shader){
+    shader.setVec3("light.position", lightPosition);
+    shader.setVec3("viewPos", programState->camera.Position);
+
+    // setup directional light
+    shader.setVec3("dirLight.direction", 0.1f, -0.9, 0.0f);
+    shader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+    shader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+    shader.setVec3("dirLight.specular", 0.4f, 0.4f, 0.4f);
+
+    // setup pointLight
+    shader.setVec3("pointLights[0].position", lightPosition);
+    shader.setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
+    shader.setVec3("pointLights[0].diffuse", 0.9f, 0.8f, 0.8f);
+    shader.setVec3("pointLights[0].specular", 0.5f, 0.1f, 0.4f);
+    shader.setFloat("pointLights[0].constant", 1.0f);
+    shader.setFloat("pointLights[0].linear", 0.09f);
+    shader.setFloat("pointLights[0].quadratic", 0.024f);
+
+    //setup spotLight
+    shader.setVec3("spotLight.position", programState->camera.Position);
+    shader.setVec3("spotLight.direction", programState->camera.Front);
+    shader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+
+    if(spotlightOn){
+        shader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+        shader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+    }else{
+        shader.setVec3("spotLight.diffuse", 0.0f, 0.0f, 0.0f);
+        shader.setVec3("spotLight.specular", 0.0f, 0.0f, 0.0f);
+    }
+
+    shader.setFloat("spotLight.constant", 1.0f);
+    shader.setFloat("spotLight.linear", 0.09f);
+    shader.setFloat("spotLight.quadratic", 0.032f);
+    shader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+    shader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+}
