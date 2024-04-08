@@ -109,6 +109,8 @@ unsigned int loadCubemap(vector<std::string> faces);
 
 void setOurLights(Shader shader);
 
+unsigned int loadTexture(char const* path, bool gammaCorrection);
+
 bool spotlightOn = false;
 bool blinn = false;
 bool blinnPressed = false;
@@ -181,6 +183,45 @@ int main() {
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
 
     Shader pinkShader("resources/shaders/pinkLight.vs", "resources/shaders/pinkLight.fs");
+
+    Shader butterflyShader("resources/shaders/butterfly.vs", "resources/shaders/butterfly.fs");
+
+    float transparentVertices[] = {
+            // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+        //    0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+        //    1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+        //    0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+        //    1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+        //    1.0f,  0.5f,  0.0f,  0.0f,  1.0f,
+        //    1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+
+
+    // transparent VAO
+    unsigned int transparentVAO, transparentVBO;
+    glGenVertexArrays(1, &transparentVAO);
+    glGenBuffers(1, &transparentVBO);
+    glBindVertexArray(transparentVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glBindVertexArray(0);
+    vector<glm::vec3> butterflies
+            {
+                    glm::vec3(-6.5f, 2.0f, -0.48f),
+                   // glm::vec3( 3.5f, 4.0f, 1.51f),
+                   // glm::vec3( 2.0f, 1.5f, 0.7f),
+                   // glm::vec3(-4.3f, 3.5f, -2.3f),
+                   // glm::vec3( 6.0f, 4.5f, -1.6f),
+                  //  glm::vec3( 0.0f, 4.0f, -1.6f)
+            };
+
+
+    unsigned int transparentTexture = loadTexture(FileSystem::getPath("resources/textures/leptiricTransparentno.png").c_str(), true);
 
     float skyboxVertices[] = {
             -1.0f,  1.0f, -1.0f,
@@ -354,6 +395,13 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        std::sort(butterflies.begin(), butterflies.end(),
+                  [cameraPosition = programState->camera.Position](const glm::vec3& a, const glm::vec3& b) {
+                      float d1 = glm::distance(a, cameraPosition);
+                      float d2 = glm::distance(b, cameraPosition);
+                      return d1 > d2;
+                  });
+
         // input
         // -----
         processInput(window);
@@ -396,7 +444,15 @@ int main() {
         glBindVertexArray(VAOcube);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-
+        glBindVertexArray(transparentVAO);
+        glBindTexture(GL_TEXTURE_2D, transparentTexture);
+        for (const glm::vec3& b : butterflies)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f));
+            ourShader.setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
@@ -605,4 +661,45 @@ void setOurLights(Shader shader){
     shader.setFloat("spotLight.quadratic", 0.032f);
     shader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
     shader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+}
+
+unsigned int loadTexture(char const * path, bool gammaCorrection)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum internalFormat;
+        GLenum dataFormat;
+        if (nrComponents == 1)
+        {
+            internalFormat = dataFormat = GL_RED;
+        }
+        else if (nrComponents == 3)
+        {
+            internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+            dataFormat = GL_RGB;
+        }
+        else if (nrComponents == 4)
+        {
+            internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+            dataFormat = GL_RGBA;
+        }
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+    return textureID;
 }
