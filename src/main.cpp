@@ -176,6 +176,16 @@ int main() {
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
+    glEnable(GL_DEPTH_TEST);
+
+    // Face culling
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    // Blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     // build and compile shaders
     // -------------------------
     Shader ourShader("resources/shaders/advancedLighting.vs", "resources/shaders/advancedLighting.fs");
@@ -186,42 +196,19 @@ int main() {
 
     Shader butterflyShader("resources/shaders/butterfly.vs", "resources/shaders/butterfly.fs");
 
-    float transparentVertices[] = {
-            // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
-            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-        //    0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
-        //    1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-        //    0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-        //    1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-        //    1.0f,  0.5f,  0.0f,  0.0f,  1.0f,
-        //    1.0f,  0.5f,  0.0f,  1.0f,  0.0f
-    };
+    // load models
+    Model treeModel("resources/objects/drvo1/Tree 1.obj");
+    treeModel.SetShaderTextureNamePrefix("material.");
 
+    PointLight& pointLight = programState->pointLight;
+    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
+    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
+    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
-    // transparent VAO
-    unsigned int transparentVAO, transparentVBO;
-    glGenVertexArrays(1, &transparentVAO);
-    glGenBuffers(1, &transparentVBO);
-    glBindVertexArray(transparentVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glBindVertexArray(0);
-    vector<glm::vec3> butterflies
-            {
-                    glm::vec3(-6.5f, 2.0f, -0.48f),
-                   // glm::vec3( 3.5f, 4.0f, 1.51f),
-                   // glm::vec3( 2.0f, 1.5f, 0.7f),
-                   // glm::vec3(-4.3f, 3.5f, -2.3f),
-                   // glm::vec3( 6.0f, 4.5f, -1.6f),
-                  //  glm::vec3( 0.0f, 4.0f, -1.6f)
-            };
-
-
-    unsigned int transparentTexture = loadTexture(FileSystem::getPath("resources/textures/leptiricTransparentno.png").c_str(), true);
+    pointLight.constant = 1.0f;
+    pointLight.linear = 0.09f;
+    pointLight.quadratic = 0.032f;
 
     float skyboxVertices[] = {
             -1.0f,  1.0f, -1.0f,
@@ -290,10 +277,6 @@ int main() {
                     FileSystem::getPath("resources/textures/skybox/back.jpg")
             };
 
-    unsigned int cubemapTexture = loadCubemap(faces);
-    skyboxShader.use();
-    skyboxShader.setInt("skybox", 0);
-
     stbi_set_flip_vertically_on_load(true);
 
     //cube on scene
@@ -360,28 +343,44 @@ int main() {
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8* sizeof(float), (void*)(5*sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    // load models
-    // -----------
-    //Model ourModel("resources/objects/backpack/backpack.obj");
-    //ourModel.SetShaderTextureNamePrefix("material.");
+    float transparentVertices[] = {
+            // positions                     //coords
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+            1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
 
-    Model island("resources/objects/island/model.obj");
-    island.SetShaderTextureNamePrefix("material.");
+    //transparent VAO
+    stbi_set_flip_vertically_on_load(true);
+    unsigned int transparentVAO, transparentVBO;
+    glGenVertexArrays(1, &transparentVAO);
+    glGenBuffers(1, &transparentVBO);
+    glBindVertexArray(transparentVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glBindVertexArray(0);
+    vector<glm::vec3> butterflies
+            {
+                    glm::vec3(7.3f, 10.5f, 14.45f),
+                    glm::vec3( 5.2f, 13.9f, 0.43f),
+                    glm::vec3( 12.5f, 15.87f, 7.7f)
+            };
+    stbi_set_flip_vertically_on_load(true);
+    unsigned int transparentTexture = loadTexture(FileSystem::getPath("resources/textures/leptiricTransparentno.png").c_str(), true);
+    butterflyShader.use();
+    butterflyShader.setInt("texture1", 0);
 
-    Model treeModel("resources/objects/drvo1/Tree 1.obj");
-    treeModel.SetShaderTextureNamePrefix("material.");
-
-    PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
-    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
-
-    pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
-
-
+    stbi_set_flip_vertically_on_load(false);
+    unsigned int cubemapTexture = loadCubemap(faces);
+    skyboxShader.use();
+    skyboxShader.setInt("skybox", 0);
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -394,7 +393,6 @@ int main() {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
         std::sort(butterflies.begin(), butterflies.end(),
                   [cameraPosition = programState->camera.Position](const glm::vec3& a, const glm::vec3& b) {
                       float d1 = glm::distance(a, cameraPosition);
@@ -431,28 +429,38 @@ int main() {
         ourShader.setMat4("model", model);
         treeModel.Draw(ourShader);
 
+
+        glDisable(GL_CULL_FACE);
+        //butterflies (blending)
+        butterflyShader.use();
+        butterflyShader.setMat4("projection",projection);
+        butterflyShader.setMat4("view",view);
+        glBindVertexArray(transparentVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, transparentTexture);
+        for (const glm::vec3& b : butterflies)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, b);
+            model = glm::scale(model,glm::vec3(3.0f));
+            model = glm::rotate(model, (float)glfwGetTime(),glm::vec3(1.0f,0.0f,0.0f));
+            butterflyShader.setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+        glEnable(GL_CULL_FACE);
+
         pinkShader.use();
         pinkShader.setMat4("projection", projection);
         pinkShader.setMat4("view", view);
+        glBindVertexArray(VAOcube);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
 
         //pink cube model
         glm::mat4 pinkCube = glm::mat4(1.0f);
         pinkCube = glm::translate(pinkCube, programState->treePosition);
         pinkCube = glm::scale(pinkCube, glm::vec3(1.2f));
         pinkShader.setMat4("model", pinkCube);
-
-        glBindVertexArray(VAOcube);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        glBindVertexArray(transparentVAO);
-        glBindTexture(GL_TEXTURE_2D, transparentTexture);
-        for (const glm::vec3& b : butterflies)
-        {
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f));
-            ourShader.setMat4("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
@@ -484,6 +492,15 @@ int main() {
     ImGui::DestroyContext();
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
+    glfwTerminate();
+
+    glDeleteVertexArrays(1, &skyboxVAO);
+    glDeleteVertexArrays(1, &VAOcube);
+    glDeleteVertexArrays(1, &transparentVAO);
+
+    glDeleteBuffers(1, &transparentVBO);
+    glDeleteBuffers(1, &VBOcube);
+    glDeleteBuffers(1, &skyboxVBO);
     glfwTerminate();
     return 0;
 }
