@@ -60,6 +60,8 @@ struct ProgramState {
     bool CameraMouseMovementUpdateEnabled = true;
     glm::vec3 islandPosition = glm::vec3(0.0f);
     float islandScale = 0.6f;
+    glm::vec3 treePosition = glm::vec3(0.0f);
+    float treeScale = 3.0;
     PointLight pointLight;
     ProgramState()
             : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
@@ -178,6 +180,8 @@ int main() {
 
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
 
+    Shader pinkShader("resources/shaders/pinkLight.vs", "resources/shaders/pinkLight.fs");
+
     float skyboxVertices[] = {
             -1.0f,  1.0f, -1.0f,
             -1.0f, -1.0f, -1.0f,
@@ -251,6 +255,70 @@ int main() {
 
     stbi_set_flip_vertically_on_load(true);
 
+    //cube on scene
+    float vertices[] = {
+            // positions                         // coords                      // normals
+            -0.5f, -0.5f, -0.5f,      0.0f, 0.0f,          0.0f, 0.0f, -1.0f,
+            0.5f,  0.5f, -0.5f,     1.0f, 1.0f,         0.0f, 0.0f, -1.0f,
+            0.5f, -0.5f, -0.5f,   1.0f, 0.0f,         0.0f, 0.0f, -1.0f,
+            0.5f,  0.5f, -0.5f,   1.0f, 1.0f,         0.0f, 0.0f, -1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,         0.0f, 0.0f, -1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,         0.0f, 0.0f, -1.0f,
+
+
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,     0.0f, 0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,      0.0f, 0.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,      0.0f, 0.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,      0.0f, 0.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,     0.0f, 0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,     0.0f, 0.0f, 1.0f,
+
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,    -1.0f, 0.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,   1.0f, 0.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,   1.0f, 0.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,   1.0f, 0.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,   1.0f, 0.0f, 0.0f,
+
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 1.0f,  0.0f, -1.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  0.0f, -1.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  0.0f, -1.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  0.0f, -1.0f, 0.0f,
+
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,    0.0f, 1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,    0.0f, 1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,    0.0f, 1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,    0.0f, 1.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,    0.0f, 1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,    0.0f, 1.0f, 0.0f
+
+    };
+
+    //VBO and VAO buffers
+    unsigned int VBOcube, VAOcube;
+    glGenVertexArrays(1, &VAOcube);
+    glGenBuffers(1, &VBOcube);
+
+    glBindVertexArray(VAOcube);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOcube);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8* sizeof(float), (void*)(5*sizeof(float)));
+    glEnableVertexAttribArray(2);
+
     // load models
     // -----------
     //Model ourModel("resources/objects/backpack/backpack.obj");
@@ -258,6 +326,9 @@ int main() {
 
     Model island("resources/objects/island/model.obj");
     island.SetShaderTextureNamePrefix("material.");
+
+    Model treeModel("resources/objects/drvo1/Tree 1.obj");
+    treeModel.SetShaderTextureNamePrefix("material.");
 
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
@@ -307,10 +378,25 @@ int main() {
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model,
-                               programState->islandPosition); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(programState->islandScale));    // it's a bit too big for our scene, so scale it down
+                               programState->treePosition); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(programState->treeScale));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
-        island.Draw(ourShader);
+        treeModel.Draw(ourShader);
+
+        pinkShader.use();
+        pinkShader.setMat4("projection", projection);
+        pinkShader.setMat4("view", view);
+
+        //pink cube model
+        glm::mat4 pinkCube = glm::mat4(1.0f);
+        pinkCube = glm::translate(pinkCube, programState->treePosition);
+        pinkCube = glm::scale(pinkCube, glm::vec3(1.2f));
+        pinkShader.setMat4("model", pinkCube);
+
+        glBindVertexArray(VAOcube);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
