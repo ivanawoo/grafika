@@ -59,8 +59,14 @@ struct ProgramState {
     Camera camera;
     bool CameraMouseMovementUpdateEnabled = true;
     glm::vec3 treePosition = glm::vec3(17.0f, 10.0f, 5.0f);
-    float treeScale = 3.0;
+    float treeScale = 1.0;
     PointLight pointLight;
+
+    glm::vec3 lanternPosition = glm::vec3(12.0f, 11.0f, 6.0f);
+    float lanternScale = 0.003;
+
+    glm::vec3 axolotlPosition = glm::vec3(17.0f, 18.3f, 6.0f);
+    float axolotlScale = 0.12;
 
     ProgramState()
             : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
@@ -209,13 +215,14 @@ int main() {
 
     // load models
     //Model treeModel("resources/objects/Tree/Tree.obj");
-    Model treeModel("resources/objects/backpack/backpack.obj");
-
+    Model treeModel("resources/objects/Tree/Tree.obj");
     treeModel.SetShaderTextureNamePrefix("material.");
 
+    Model lanternModel("resources/objects/lantern/model.obj");
+    lanternModel.SetShaderTextureNamePrefix("material.");
 
-    Model islandModel("resources/objects/island/model.obj");
-    islandModel.SetShaderTextureNamePrefix("material.");
+    Model axolotlModel("resources/objects/axolotl/model.obj");
+    axolotlModel.SetShaderTextureNamePrefix("material.");
 
     //Bloom
     // configure framebuffers
@@ -508,6 +515,19 @@ int main() {
         model = glm::scale(model, glm::vec3(programState->treeScale));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         treeModel.Draw(ourShader);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->lanternPosition);
+        model = glm::scale(model, glm::vec3(programState->lanternScale));
+        ourShader.setMat4("model", model);
+        lanternModel.Draw(ourShader);
+
+        model = glm::mat4(1.0f);
+        programState->axolotlPosition.x = programState->axolotlPosition.x + glm::cos(glfwGetTime())*0.02;
+        model = glm::translate(model, programState->axolotlPosition);
+        model = glm::scale(model, glm::vec3(programState->axolotlScale));
+        ourShader.setMat4("model", model);
+        axolotlModel.Draw(ourShader);
 
 
         glDisable(GL_CULL_FACE);
