@@ -60,8 +60,8 @@ struct ProgramState {
     bool CameraMouseMovementUpdateEnabled = true;
     glm::vec3 islandPosition = glm::vec3(0.0f);
     float islandScale = 0.6f;
-    glm::vec3 treePosition = glm::vec3(20.0f);
-    float treeScale = 3.0;
+    glm::vec3 treePosition = glm::vec3(17.0f, 10.0f, 5.0f);
+    float treeScale = 1.0;
     PointLight pointLight;
     ProgramState()
             : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
@@ -163,6 +163,7 @@ int main() {
     stbi_set_flip_vertically_on_load(true);
 
     programState = new ProgramState;
+
     programState->LoadFromFile("resources/program_state.txt");
     if (programState->ImGuiEnabled) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -207,7 +208,7 @@ int main() {
 
 
     // load models
-    Model treeModel("resources/objects/drvo1/Tree 1.obj");
+    Model treeModel("resources/objects/Tree/Tree.obj");
     treeModel.SetShaderTextureNamePrefix("material.");
 
     Model islandModel("resources/objects/island/model.obj");
@@ -535,7 +536,7 @@ int main() {
 
         //pink cube model
         glm::mat4 pinkCube = glm::mat4(1.0f);
-        pinkCube = glm::translate(pinkCube, programState->treePosition);
+        pinkCube = glm::translate(pinkCube, glm::vec3(programState->treePosition.x, programState->treePosition.y - 0.6f, programState->treePosition.z));
         pinkCube = glm::scale(pinkCube, glm::vec3(1.2f));
         pinkShader.setMat4("model", pinkCube);
 
