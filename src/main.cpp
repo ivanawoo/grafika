@@ -723,9 +723,7 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Begin("Hello window");
         ImGui::Text("Hello text");
         ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
-        ImGui::Text("x %f",  lightPosition.x);
-        ImGui::Text("y %f", lightPosition.y);
-        ImGui::Text("z %f", lightPosition.z);
+        ImGui::Text("exposure %f", exposure);
 
 
         ImGui::End();

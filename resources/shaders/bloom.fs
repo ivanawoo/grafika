@@ -22,4 +22,5 @@ void main()
         vec3 result = pow(hdrColor, vec3(1.0/gamma));
         FragColor = vec4(result,1.0);
     }
+
 }
