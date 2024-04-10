@@ -58,11 +58,10 @@ struct ProgramState {
     bool ImGuiEnabled = false;
     Camera camera;
     bool CameraMouseMovementUpdateEnabled = true;
-    glm::vec3 islandPosition = glm::vec3(0.0f);
-    float islandScale = 0.6f;
     glm::vec3 treePosition = glm::vec3(17.0f, 10.0f, 5.0f);
-    float treeScale = 1.0;
+    float treeScale = 3.0;
     PointLight pointLight;
+
     ProgramState()
             : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
 
@@ -70,6 +69,8 @@ struct ProgramState {
 
     void LoadFromFile(std::string filename);
 };
+//glm::vec3 lightPosition = glm::vec3(75.2f, 100.0f, 155.3f);
+glm::vec3 lightPosition = glm::vec3(15.0f, 15.0f, 15.0f);
 
 void ProgramState::SaveToFile(std::string filename) {
     std::ofstream out(filename);
@@ -121,7 +122,6 @@ bool bloom = false;
 bool bloomKeyPressed = false;
 float exposure = 1.5f;
 
-glm::vec3 lightPosition(-4.2f, 4.0f, 2.3f);
 
 int main() {
     // glfw: initialize and configure
@@ -208,8 +208,11 @@ int main() {
 
 
     // load models
-    Model treeModel("resources/objects/Tree/Tree.obj");
+    //Model treeModel("resources/objects/Tree/Tree.obj");
+    Model treeModel("resources/objects/backpack/backpack.obj");
+
     treeModel.SetShaderTextureNamePrefix("material.");
+
 
     Model islandModel("resources/objects/island/model.obj");
     islandModel.SetShaderTextureNamePrefix("material.");
@@ -487,8 +490,6 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
         // don't forget to enable shader before setting uniforms
         ourShader.use();
         setOurLights(ourShader);
@@ -507,6 +508,7 @@ int main() {
         model = glm::scale(model, glm::vec3(programState->treeScale));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         treeModel.Draw(ourShader);
+
 
         glDisable(GL_CULL_FACE);
         //butterflies (blending)
@@ -701,13 +703,11 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Begin("Hello window");
         ImGui::Text("Hello text");
         ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
-        ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
-        ImGui::DragFloat3("island position", (float*)&programState->islandPosition);
-        ImGui::DragFloat("Island scale", &programState->islandScale, 0.05, 0.1, 4.0);
+        ImGui::Text("x %f",  lightPosition.x);
+        ImGui::Text("y %f", lightPosition.y);
+        ImGui::Text("z %f", lightPosition.z);
 
-        ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.quadratic", &programState->pointLight.quadratic, 0.05, 0.0, 1.0);
+
         ImGui::End();
     }
 
@@ -772,14 +772,14 @@ void setOurLights(Shader shader){
     shader.setVec3("viewPos", programState->camera.Position);
 
     // setup directional light
-    shader.setVec3("dirLight.direction", 0.1f, -0.9, 0.0f);
-    shader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+    shader.setVec3("dirLight.direction", 0.7f, 0.9, 0.0f);
+    shader.setVec3("dirLight.ambient", 0.5f, 0.05f, 0.05f);
     shader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
     shader.setVec3("dirLight.specular", 0.4f, 0.4f, 0.4f);
 
     // setup pointLight
     shader.setVec3("pointLights[0].position", lightPosition);
-    shader.setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
+    shader.setVec3("pointLights[0].ambient", 0.5f, 0.05f, 0.05f);
     shader.setVec3("pointLights[0].diffuse", 0.9f, 0.8f, 0.8f);
     shader.setVec3("pointLights[0].specular", 0.5f, 0.1f, 0.4f);
     shader.setFloat("pointLights[0].constant", 1.0f);
@@ -789,7 +789,7 @@ void setOurLights(Shader shader){
     //setup spotLight
     shader.setVec3("spotLight.position", programState->camera.Position);
     shader.setVec3("spotLight.direction", programState->camera.Front);
-    shader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+    shader.setVec3("spotLight.ambient", 0.3f, 0.2f, 0.6f);
 
     if(spotlightOn){
         shader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
