@@ -69,13 +69,12 @@ struct ProgramState {
     float axolotlScale = 0.12;
 
     ProgramState()
-            : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
+            : camera(glm::vec3(11.0f, 0.0f, 3.0f)) {}
 
     void SaveToFile(std::string filename);
 
     void LoadFromFile(std::string filename);
 };
-//glm::vec3 lightPosition = glm::vec3(75.2f, 100.0f, 155.3f);
 glm::vec3 lightPosition = glm::vec3(15.0f, 15.0f, 15.0f);
 
 void ProgramState::SaveToFile(std::string filename) {
@@ -121,7 +120,7 @@ unsigned int loadTexture(char const* path, bool gammaCorrection);
 void renderQuad();
 
 bool spotlightOn = false;
-bool blinn = false;
+bool blinn = true;
 bool blinnPressed = false;
 
 bool bloom = false;
@@ -646,11 +645,11 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
 
-    if(glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnPressed)
+    if(glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
     {
-        blinn = !blinn;
-        blinnPressed = true;
+        spotlightOn = !spotlightOn;
     }
+    
     if(glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
     {
         blinnPressed = false;
@@ -720,11 +719,14 @@ void DrawImGui(ProgramState *programState) {
 
     {
         static float f = 0.0f;
-        ImGui::Begin("Hello window");
-        ImGui::Text("Hello text");
+        ImGui::Begin("Moj projekat iz grafike");
+        ImGui::Text("Cao svima :)");
         ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
-        ImGui::Text("exposure %f", exposure);
 
+        ImGui::Text("advanced lighting is on/off?  ", blinn == true ? "ON" : "OFF");
+        ImGui::Text("bloom is on/off?   ", bloom == true ? "ON" : "OFF");
+        ImGui::Text("exposure %f", exposure);
+        ImGui::Text("spotlight is on/off?   ", spotlightOn == true? "ON" : "OFF");
 
         ImGui::End();
     }
