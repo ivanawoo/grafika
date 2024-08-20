@@ -101,7 +101,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "project_base::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-project_base-Debug-3e653d7164c5ba761cc6.json",
+					"jsonFile" : "target-project_base-Debug-829121ac335fafbd573c.json",
 					"name" : "project_base",
 					"projectIndex" : 0
 				}
@@ -117,6 +117,6 @@
 	"version" : 
 	{
 		"major" : 2,
-		"minor" : 6
+		"minor" : 7
 	}
 }
