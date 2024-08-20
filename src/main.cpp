@@ -65,7 +65,7 @@ struct ProgramState {
     glm::vec3 lanternPosition = glm::vec3(12.0f, 11.0f, 6.0f);
     float lanternScale = 0.003;
 
-    glm::vec3 axolotlPosition = glm::vec3(17.0f, 18.3f, 6.0f);
+    glm::vec3 axolotlPosition = glm::vec3(18.0f, 18.3f, 6.0f);
     float axolotlScale = 0.12;
 
     ProgramState()
